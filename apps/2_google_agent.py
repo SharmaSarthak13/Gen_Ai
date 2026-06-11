@@ -33,4 +33,5 @@ while True:
         {"messages":[{"role":"user","content":query}]},
         {"configurable":{"thread_id":"1"}},
         )
+    
     print("AI:",response["messages"][-1].content) 
