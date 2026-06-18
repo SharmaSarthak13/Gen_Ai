@@ -1,0 +1,4 @@
+myenv/
+apps/my_tasks.db
+.env
+.vscode/

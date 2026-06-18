@@ -1,0 +1,10 @@
+langchain
+langchain-google-genai
+langchain-groq
+dotenv
+streamlit
+langchain-community
+langgraph
+pypdf
+langchain-huggingface
+sentence-transformers

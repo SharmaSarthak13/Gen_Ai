@@ -9,7 +9,7 @@ import streamlit as st
 llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash")
 
 st.title("🤖 AskBuddy AI QnA Bot")
-st.markdown("My QnA Bot with Langchain and Google Gemini")
+st.markdown("My QnA Bot with Langchain and Google Gemini  ")
 
 if "messages" not in st.session_state:
     st.session_state.messages = []

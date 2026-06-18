@@ -23,17 +23,19 @@ llm = ChatGroq(
 search = GoogleSerperAPIWrapper()
 tools = [search.run] 
 
-# Initialize session state keys cleanly
+# FIX 1 & 2: Initialize session state keys cleanly without using 'query'
 if "memory" not in st.session_state:
     st.session_state.memory = MemorySaver()
 
 if "history" not in st.session_state:
+    # Start with a clean, empty chat history list
     st.session_state.history = []
     
 # Setup agent
 agent = create_agent(
     model=llm,
     tools=tools,
+    streaming = True,
     checkpointer=st.session_state.memory,
     system_prompt="You are an amazing AI agent and can search on Google"
 )
@@ -43,7 +45,9 @@ st.subheader("QuickAnswer - Answers at the speed of thought")
 
 # Render existing chat history
 for message in st.session_state.history:
-    st.chat_message(message["role"]).markdown(message["content"])
+    role = message["role"]
+    content = message["content"]
+    st.chat_message(role).markdown(content)
 
 # Capture user input
 query = st.chat_input("Ask Anything ?")
@@ -53,25 +57,21 @@ if query:
     st.chat_message("user").markdown(query)
     st.session_state.history.append({"role": "user", "content": query})
     
-    # 2. Setup the stream output container for the AI
-    with st.chat_message("assistant"):
+    # 2. Get response from the LangGraph agent
+    response = agent.stream(
+        {"messages": [{"role": "user", "content": query}]},
+        {"configurable": {"thread_id": "1"}},
+        stream_mode = "messages"
+    )
+    
+    ai_container = st.chat_messages("Ai")
+    with ai_container:
         space = st.empty()
-        message_accumulator = ""
         
-        # 3. Request the stream from the LangGraph agent
-        response_stream = agent.stream(
-            {"messages": [{"role": "user", "content": query}]},
-            {"configurable": {"thread_id": "1"}},
-            stream_mode="messages"
-        )
+        message = ""
         
-        # 4. Correctly unpack the (message_chunk, metadata) tuple
-        for message_chunk, metadata in response_stream:
-            # Check if the chunk contains text content to avoid errors
-            if message_chunk.content:
-                message_accumulator += message_chunk.content
-                space.markdown(message_accumulator) # Use markdown to render cleanly
-                
-        # 5. Save the final completed message to the session state history
-        if message_accumulator:
-            st.session_state.history.append({"role": "assistant", "content": message_accumulator})
+        for chunk in response:
+             message = message + chunk[0].content
+             space.write(message) 
+             
+        st.session_state.history.append({"role": "assistant", "content": message})
